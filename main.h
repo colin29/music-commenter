@@ -6,7 +6,7 @@ class SongEntry{
 	std::string comment;
 };
 
-
+//printCommandList prints the availible commands and format to use them.
 void printCommandList();
 
 void printListOfSongEntries();
