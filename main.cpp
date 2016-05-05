@@ -13,28 +13,29 @@ using std::cout;
 using std::endl;
 
 
-enum ParamCount{
-	ADD = 3, DEL = 1, RN = 2, PRINT = 0, EXIT = 0, INVALID_COMMAND = -1,
-};
 
 
 //returns -1 for invalid command
-ParamCount getParamCountForCommand(string command){
+Command getParamCountForCommand(string command){
 	for(char &c : command){
 		c = toupper(c);
 	}
 	if(command == "ADD"){
-		return ParamCount::ADD;
+		return Command::ADD;
 	}else if(command == "DEL"){
-		return ParamCount::DEL;
-	}else if(command == "DEL"){
-		return ParamCount::RN;
-	}else if(command == "DEL"){
-		return ParamCount::PRINT;
-	}else if(command == "DEL"){
-		return ParamCount::EXIT;
-	}else{
-		return ParamCount::INVALID_COMMAND;
+		return Command::DEL;
+	}else if(command == "RN"){
+		return Command::RN;
+	}else if(command == "PRINT"){
+		return Command::PRINT;
+	}
+	else if (command == "ExIT") {
+		return Command::EXIT;
+	}
+	else if (command == "HELP") {
+		return Command::HELP;
+	}else {
+		return Command::INVALID_COMMAND;
 	}
 }
 
@@ -42,89 +43,23 @@ vector<SongEntry> songEntries;
 int main(){
 
 
-	string command;
 	bool end = false; //used by the EXIT command to exit the program.
 
-	//Display the list of commands and await input from user
+
+	bool shownCommandList = false;
+
 	while(!end){
-
-		printCommandList();
-
-		
-		
-		//extract the command token
-		cin.clear();
-		command = "";
-		cin >> command; 
-		cout << "Recieved command: '"<< command << "'" << endl;
-		
-
-		char curParam[1000];
+		//Display the list of commands and await input from user
+		if (!shownCommandList) {
+			printCommandList();
+			shownCommandList = true;
+		}
 		vector<string> params;
-		int paramCounter = 0;
+		Command command = parseCommand(params);
 
-
-		
-		bool doneParsingCommand = false;
-
-		//extract parameters until a unqualified linebreak is reached (quotations can contain newlines)
-		while(true){ 
-			paramCounter +=1;
-			curParam[0] = '\0';
-
-			//discard leading or excess white space characters
-			while(cin.peek() == ' '){ 
-				cin.ignore();
-			} 
-			
-			char c = cin.peek();
-			if(c == '\n'){ 	
-				break;
-			}else if(c == '\"'){ //extract parameter until reach a double quotation mark
-				cin.ignore();
-				cin.get(curParam, sizeof curParam/sizeof(*curParam), '\"'); //
-				cin.ignore();
-			}else{ //regular space-seperated parameter.
-				while(true){
-					char d = cin.get();
-					if (d == '\n' || d == ' ') {
-						if (d == '\n') {
-							doneParsingCommand = true;
-						}
-						break; //done reading this parameter.
-					}
-				}
-
-			}
-
-			if(cin.fail()){
-				cout << "Error: Parameter " << paramCounter << " is too long (mostly likely)" << endl;
-				cin.clear();
-				break;
-			}
-
-			string sParam = curParam;
-			params.push_back(sParam);
-
-			if (doneParsingCommand) {
-				break;
-			}
-
-			
+		if (command != Command::INVALID_COMMAND) {
+			//do the command parsed
 		}
-
-		//validate command and number of parameters
-		int numOfParams = static_cast<int>(getParamCountForCommand(command));
-		if(numOfParams == -1){
-			cout << "Error: Invalid Command \"" << command << "\"" << endl;
-		}else if(params.size() != numOfParams){
-			cout << "Error: wrong number of parameters " << params.size() << ", expected: " << numOfParams  << endl;
-		}
-
-		cout << "Parsing command success" << endl;
-		//TODO: actually do the command.
-
-
 	}
 
 
@@ -132,17 +67,105 @@ int main(){
 }
 
 
+Command parseCommand(vector<string>& params) 
+{
+	params.clear();
+
+	//extract the command token
+	cin.clear();
+	string command = "";
+	cin >> command;
+
+	char curParam[1000];
+	int paramCounter = 0;
+
+
+	bool doneParsingCommand = false;
+	//extract parameters until a unqualified linebreak is reached (quotations can contain newlines)
+	//each loop extracts a single parameter
+	while (true) {
+		paramCounter += 1;
+		curParam[0] = '\0';
+
+		//discard leading or excess white space characters
+		while (cin.peek() == ' ') {
+			cin.ignore();
+		}
+
+		char c = cin.peek();
+		if (c == '\n') {
+			break;
+		}
+		else if (c == '\"') { //extract parameter until reach a double quotation mark
+			cin.ignore();
+			cin.get(curParam, sizeof curParam / sizeof(*curParam), '\"'); //
+			cin.ignore();
+		}
+		else { //regular space-seperated parameter.
+			while (true) {
+				char d = cin.get();
+				if (d == '\n' || d == ' ') {
+					if (d == '\n') {
+						doneParsingCommand = true;
+					}
+					break; //done reading this parameter.
+				}
+			}
+
+		}
+
+		if (cin.fail()) {
+			cout << "Error: Parameter " << paramCounter << " is too long (mostly likely)" << endl;
+			cin.clear();
+			break;
+		}
+
+		string sParam = curParam;
+		params.push_back(sParam);
+
+		if (doneParsingCommand) {
+			break;
+		}
+	}
+
+	//validate command and number of parameters
+	Command cCommand = getParamCountForCommand(command);
+	int numOfParams = static_cast<int>(cCommand);
+	if (numOfParams == -1) {
+		cout << "Error: Invalid Command \"" << command << "\"" << endl;
+		return Command::INVALID_COMMAND;
+	}
+	else if (params.size() != numOfParams) {
+		cout << "Error: wrong number of parameters " << params.size() << ", expected: " << numOfParams << endl;
+		return Command::INVALID_COMMAND;
+	}
+
+	cout << "Parsing command success " << "(" << command << ")" << endl;
+	return cCommand;
+}
 
 
 void printCommandList(){
-
+	cout << "Command List:" << endl;
+	cout << "add <entry_title> <path> <description>" << endl;
+	cout << "del <entry_title>" << endl;
+	cout << "rn <entry_title> <new_entry_title>" << endl;
+	cout << "print" << endl;
+	cout << "exit" << endl;
+	cout << "Type help to reshow command list" << endl;
+	cout << "===============" << endl;
 }
 
 void printListOfSongEntries(){
-
+	cout << "Listing all Song Entries:" << endl;
+	for (SongEntry &se : songEntries) {
+		printSongEntry(se);
+	}
 }
 
-void printSongEntry(SongEntry songEntry){
-
+void printSongEntry(const SongEntry &se){
+	cout << "Title: " << se.title << endl;
+	cout << "Path: " << se.path << endl;
+	cout << "Comment: " << se.comment << endl;
 }
 
