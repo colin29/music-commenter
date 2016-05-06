@@ -57,8 +57,64 @@ int main(){
 		vector<string> params;
 		Command command = parseCommand(params);
 
+		if (command == Command::ADD) {
+			SongEntry n;
+			n.title = params[0];
+			n.path = params[1];
+			n.comment = params[2];
+
+			bool entryAlreadyExists = false;
+			for(SongEntry &se : songEntries) {
+				if(se.title == n.title) {
+					entryAlreadyExists = true;
+				}
+			}
+			if(!entryAlreadyExists) {
+				songEntries.push_back(n);
+			} else {
+				cout << "Entry \"" << n.title << "\" already exists." << endl;
+			}
+
+		}else if(command == Command::DEL){
+			string title = params[0];
+			int erasedCount = 0;
+			for(std::vector<SongEntry>::iterator it = songEntries.begin(); it != songEntries.end(); ++it){
+				if(it->title == title) {
+					it = songEntries.erase(it);
+					erasedCount += 1;
+				}
+			}
+			if(erasedCount == 0) {
+				cout << "No entry with name \"" << title << "\" found." << endl;
+			} else if(erasedCount > 1) {
+				cout << "State Error: more than one entry with name \"" << title << "\" was found. (All were deleted, but there should not be multiples.)" << endl;
+			} else if(erasedCount == 1) {
+				cout << "Entry\"" << title << "\" succesfully erased." << endl;
+			}
+
+		}else if(command == Command::RN){
+			string title = params[0];
+			string newTitle = params[1];
+			for(SongEntry &se : songEntries) {
+				if(se.title == title) {
+					se.title = newTitle;
+				}
+			}
+
+		}else if(command == Command::PRINT){
+			printListOfSongEntries();
+		}else if(command == Command::EXIT){
+			exit(0);
+		}else if(command == Command::HELP){
+			printCommandList();
+		}else if(command == Command::INVALID_COMMAND){
+			cout << "Error: Invalid Command" << endl;
+		} else {
+			cout << "Error: Unsupported Command" << endl;
+		}
+
 		if (command != Command::INVALID_COMMAND) {
-			//do the command parsed
+			continue;
 		}
 	}
 
@@ -102,13 +158,19 @@ Command parseCommand(vector<string>& params)
 			cin.ignore();
 		}
 		else { //regular space-seperated parameter.
+			int i = 0;
 			while (true) {
 				char d = cin.get();
 				if (d == '\n' || d == ' ') {
 					if (d == '\n') {
 						doneParsingCommand = true;
 					}
+					curParam[i] = '\0';
 					break; //done reading this parameter.
+				} else {
+					//add the character to the string.
+					curParam[i] = d;
+					i += 1;
 				}
 			}
 
@@ -147,7 +209,7 @@ Command parseCommand(vector<string>& params)
 
 void printCommandList(){
 	cout << "Command List:" << endl;
-	cout << "add <entry_title> <path> <description>" << endl;
+	cout << "add <entry_title> <path> <description>" << endl; /* will fail if there is already a entry with the same title*/
 	cout << "del <entry_title>" << endl;
 	cout << "rn <entry_title> <new_entry_title>" << endl;
 	cout << "print" << endl;
@@ -158,8 +220,10 @@ void printCommandList(){
 
 void printListOfSongEntries(){
 	cout << "Listing all Song Entries:" << endl;
+	cout << "---------------" << endl;
 	for (SongEntry &se : songEntries) {
 		printSongEntry(se);
+		cout << "---------------" << endl;
 	}
 }
 

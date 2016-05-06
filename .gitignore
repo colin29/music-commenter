@@ -7,8 +7,8 @@
 *.log
 *.pdb
 *.vcproj.*.user
-[Dd]ebug
-[Rr]elease
 *.suo
 *.sdf
 *.opensdf 
+[Dd]ebug
+[Rr]elease

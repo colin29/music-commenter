@@ -12,7 +12,7 @@ enum Command {
 };
 
 
-Command parseCommand(vector<string>& params);
+Command parseCommand(std::vector<std::string>& params);
 
 
 //printCommandList prints the availible commands and format to use them.
